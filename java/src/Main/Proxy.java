@@ -6,11 +6,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.Calendar;
+import java.sql.Timestamp;
 
 /**
  * Created by Daniel Chan on 28/1/2017.
+ *
+ * Supports HTTP 1.1 GET/POST requests, DOES NOT SUPPORT HTTPS. WILL BREAK!
  */
 public class Proxy {
 
@@ -55,12 +56,10 @@ public class Proxy {
     return buffer;
   }
 
-  // Bug where if I enter http://httpbin.org it fails to get anything.
-  // TODO: FIX THIS BUG.
+
   private byte[] removeHost(ByteArrayOutputStream request) {
 
     String clientReq = new String(request.toByteArray());
-    int getIndex = clientReq.indexOf("GET");
     int startingIndex = clientReq.indexOf(this.destinationUrl);
     int endingIndex = clientReq.indexOf(this.hostName) + this.hostName.length();
 
@@ -68,8 +67,9 @@ public class Proxy {
       return clientReq.getBytes();
     }
 
-    System.out.println("REMOVING: " + clientReq.substring(startingIndex - 1,
-        endingIndex));
+    // Debug message.
+//    System.out.println("REMOVING: " + clientReq.substring(startingIndex - 1,
+//        endingIndex));
 
     StringBuilder sb = new StringBuilder(clientReq);
 
@@ -81,9 +81,10 @@ public class Proxy {
       sb.insert(4, '/');
     }
 
-    System.out.println("----- ADJUSTED HTTP REQ ------");
-    System.out.println(sb.toString());
-    System.out.print("----- END OF ADJUSTED   ------\n");
+    // Debug message.
+//    System.out.println("----- ADJUSTED HTTP REQ ------");
+//    System.out.println(sb.toString());
+//    System.out.print("----- END OF ADJUSTED   ------\n");
 
     return sb.toString().getBytes();
 
@@ -94,9 +95,6 @@ public class Proxy {
   expressions, where the '/' occurs. Which would result in an array of the
   following [http:, , www.httpbin.org, get] where we would always want the
   index of 2, if the first 5 characters of the string is http:
-
-  If we pass an empty address, it crashes.
-
    */
   private String extractHost(String requestContent) {
 
@@ -115,9 +113,12 @@ public class Proxy {
 
   private void initialize() {
 
+    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
     try {
       ServerSocket serverListen = new ServerSocket(this.localPortNumber);
-      System.out.println("Listening on port: " + this.localPortNumber);
+      System.out.println("["+ timestamp.toString() + "]" +" Listening on " +
+          "port: " + this.localPortNumber);
 
 
       while (true) {
@@ -128,9 +129,11 @@ public class Proxy {
 
           client = serverListen.accept();
 
-          System.out.println("Incoming request from " + client
-              .getRemoteSocketAddress().toString() + ":" +
-              client.getPort());
+          System.out.println("["+ timestamp.toString() + "]" + " Incoming " +
+              "request" +
+              " " +
+              "from " + client
+              .getRemoteSocketAddress().toString());
 
           final InputStream fromClient = client.getInputStream();
           final OutputStream toClient = client.getOutputStream();
@@ -140,7 +143,9 @@ public class Proxy {
 //          System.out.println(requestContent);
 
           // Debugging purpose, to see what the host is being set to.
-          System.out.println(this.hostName);
+          System.out.println("["+ timestamp.toString() + "] " +client
+              .getRemoteSocketAddress().toString() + " " +
+              "attempting to connect to " + this.destinationUrl);
 
           try {
             server = new Socket(this.hostName, this.remotePortNumber);
@@ -150,6 +155,8 @@ public class Proxy {
             client.close();
             continue;
           }
+
+          System.out.println("["+ timestamp.toString() + "] " +"Successfully connected to " + this.destinationUrl);
 
           final InputStream fromServer = server.getInputStream();
           final OutputStream toServer = server.getOutputStream();
@@ -194,7 +201,7 @@ public class Proxy {
                 client.close();
               }
             } catch (IOException e) {
-
+              System.out.println("Failed to close server/client sockets." + e);
             }
           }
 
