@@ -51,6 +51,8 @@ public class Proxy {
       if(replaceHost) {
         this.hostName = extractHost(requestContent);
 
+
+
         return removeHost(baos);
       }
 
@@ -69,15 +71,29 @@ public class Proxy {
   private byte[] removeHost(ByteArrayOutputStream request) {
 
     String clientReq = new String(request.toByteArray());
+    int getIndex = clientReq.indexOf("GET");
     int startingIndex = clientReq.indexOf(this.destinationUrl);
     int endingIndex = clientReq.indexOf(this.hostName) + this.hostName.length();
+
+    if(startingIndex <= 0) {
+      return clientReq.getBytes();
+    }
 
     System.out.println("REMOVING: " + clientReq.substring(startingIndex - 1,
         endingIndex));
 
+
     StringBuilder sb = new StringBuilder(clientReq);
 
+
+
     sb.delete(startingIndex - 1, endingIndex);
+
+    // The case where the user inputs http://google.com with no / at the end
+    // of the url.
+    if(clientReq.charAt(endingIndex) == ' ') {
+      sb.insert(4, '/');
+    }
 
     System.out.println("----- ADJUSTED HTTP REQ ------");
     System.out.println(sb.toString());
@@ -93,6 +109,9 @@ public class Proxy {
   expressions, where the '/' occurs. Which would result in an array of the
   following [http:, , www.httpbin.org, get] where we would always want the
   index of 2, if the first 5 characters of the string is http:
+
+  If we pass an empty address, it crashes.
+
    */
   private String extractHost(String requestContent) {
 
@@ -102,16 +121,12 @@ public class Proxy {
 
     String[] urlSplit = this.destinationUrl.split("/");
 
-    System.out.println("URL SPLIT: " + Arrays.toString(urlSplit));
-
     if(urlSplit[0].equalsIgnoreCase("http:")) {
       return urlSplit[2];
     } else {
       return urlSplit[0];
     }
-
   }
-
 
 
   private void initialize() {
@@ -129,7 +144,8 @@ public class Proxy {
 
           client = serverListen.accept();
 
-          System.out.println("Incoming request from " + client.getInetAddress().getHostAddress() + ":" +
+          System.out.println("Incoming request from " + client
+              .getRemoteSocketAddress().toString() + ":" +
               client.getPort());
 
           final InputStream fromClient = client.getInputStream();
@@ -175,7 +191,7 @@ public class Proxy {
           byte[] response = extractBytes(fromServer, false);
 
           // Hangs here for some weird reason, unable to debug why it hangs
-          // here.
+          // here. FIXED.
           try {
               toClient.write(response, 0, response.length);
               toClient.flush();
@@ -184,8 +200,6 @@ public class Proxy {
             System.out.println("Something happened to the server's socket. Unable to read" +
                 " from it." + ioError);
           }
-
-
 
         } finally{
             try {
@@ -200,9 +214,7 @@ public class Proxy {
             }
           }
 
-
         }
-
 
       } catch(IOException ioError){
         System.out.println(ioError);
