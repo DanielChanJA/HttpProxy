@@ -114,8 +114,7 @@ public class Proxy {
   private void initialize() {
     try {
       ServerSocket serverListen = new ServerSocket(this.localPortNumber);
-      System.out.println("[" + LocalDateTime.now() + "]" + " Listening on " +
-          "port: " + this.localPortNumber);
+      printToConsole("Listening on port: " + this.localPortNumber);
 
 
       while (true) {
@@ -154,13 +153,21 @@ public class Proxy {
           final InputStream fromServer = server.getInputStream();
           final OutputStream toServer = server.getOutputStream();
 
+          /*
+          Partial reads problems occur here, the same problem occurs below as
+          well. If all the data isn't read in one cycle, we have a problem
+          and we won't get the complete data from the client/user.
 
-          // Partial reads problems occur here.
+          Originally wanted to create a while loop inside each one of the
+          writes, so that we loop through the entire InputStreams until the
+          socket closes, that way we won't run into the partial reads issue.
+          */
           Thread tunnelClientInfo = new Thread() {
             public void run() {
+
               try {
-                toServer.write(req, 0, req.length);
-                toServer.flush();
+                  toServer.write(req, 0, req.length);
+                  toServer.flush();
 
               } catch (IOException ioError) {
                 printToConsole("ERROR: Something happened to the client's "
@@ -173,12 +180,13 @@ public class Proxy {
           // proxy streams start at the same time.
           tunnelClientInfo.start();
 
-          // Partial reads problem occur here.
+          // Partial reads problem occur here. Same issue as the above thread.
           byte[] response = extractBytes(fromServer, false);
 
           try {
-            toClient.write(response, 0, response.length);
-            toClient.flush();
+
+              toClient.write(response, 0, response.length);
+              toClient.flush();
 
           } catch (IOException ioError) {
             printToConsole("ERROR: Something happened to the server's socket" +
