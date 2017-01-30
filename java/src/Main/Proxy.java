@@ -39,31 +39,20 @@ public class Proxy {
         baos.flush();
         break;
       }
-
-      // Need to somehow find a way to bitshift left by however many bytes
-      // that the host uses.
       requestContent = new String(baos.toByteArray());
 
-
       // Debugging purposes, seeing the POST and GET requests from client.
-      System.out.println(requestContent);
+//      System.out.println(requestContent);
 
       if(replaceHost) {
         this.hostName = extractHost(requestContent);
 
-
-
         return removeHost(baos);
       }
-
     } catch (IOException ioException) {
       System.out.println("Failed to close stream" + ioException);
     }
-
-    // Debugging to see HTML REQUEST content.
-//    System.out.println(requestContent);
     return buffer;
-
   }
 
   // Bug where if I enter http://httpbin.org it fails to get anything.
@@ -82,10 +71,7 @@ public class Proxy {
     System.out.println("REMOVING: " + clientReq.substring(startingIndex - 1,
         endingIndex));
 
-
     StringBuilder sb = new StringBuilder(clientReq);
-
-
 
     sb.delete(startingIndex - 1, endingIndex);
 
@@ -102,7 +88,6 @@ public class Proxy {
     return sb.toString().getBytes();
 
   }
-
 
   /*
   In a URL like http://www.httpbin.org/get we can split it up using regular
@@ -127,7 +112,6 @@ public class Proxy {
       return urlSplit[0];
     }
   }
-
 
   private void initialize() {
 
