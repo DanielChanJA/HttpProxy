@@ -5,12 +5,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 /**
  * Created by Daniel Chan on 28/1/2017.
- * <p>
+ *
  * Supports HTTP 1.1 GET/POST requests, DOES NOT SUPPORT HTTPS. WILL BREAK!
  */
 public class Proxy {
@@ -108,7 +107,7 @@ public class Proxy {
     }
   }
 
-  private static void printToConsole(String text) {
+  public static void printToConsole(String text) {
     System.out.println("[" + LocalDateTime.now() + "] " + text);
   }
 
@@ -155,6 +154,8 @@ public class Proxy {
           final InputStream fromServer = server.getInputStream();
           final OutputStream toServer = server.getOutputStream();
 
+
+          // Partial reads problems occur here.
           Thread tunnelClientInfo = new Thread() {
             public void run() {
               try {
@@ -172,6 +173,7 @@ public class Proxy {
           // proxy streams start at the same time.
           tunnelClientInfo.start();
 
+          // Partial reads problem occur here.
           byte[] response = extractBytes(fromServer, false);
 
           try {
