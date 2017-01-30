@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.Calendar;
 
 /**
  * Created by Daniel Chan on 28/1/2017.
@@ -28,7 +29,7 @@ public class Proxy {
   private byte[] extractBytes(InputStream clientRequest, boolean replaceHost) {
 
     String requestContent;
-    byte[] buffer = new byte[4096];
+    byte[] buffer = new byte[100000];
 
     try {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -45,13 +46,11 @@ public class Proxy {
 
 
       // Debugging purposes, seeing the POST and GET requests from client.
-//      System.out.println(requestContent);
+      System.out.println(requestContent);
 
       if(replaceHost) {
         this.hostName = extractHost(requestContent);
-        int startingIndex = requestContent.indexOf(this.hostName);
 
-        System.out.println(startingIndex + ": " + requestContent.charAt(startingIndex));
         return removeHost(baos);
       }
 
@@ -65,6 +64,8 @@ public class Proxy {
 
   }
 
+  // Bug where if I enter http://httpbin.org it fails to get anything.
+  // TODO: FIX THIS BUG.
   private byte[] removeHost(ByteArrayOutputStream request) {
 
     String clientReq = new String(request.toByteArray());
@@ -78,7 +79,9 @@ public class Proxy {
 
     sb.delete(startingIndex - 1, endingIndex);
 
+    System.out.println("----- ADJUSTED HTTP REQ ------");
     System.out.println(sb.toString());
+    System.out.print("----- END OF ADJUSTED   ------\n");
 
     return sb.toString().getBytes();
 
