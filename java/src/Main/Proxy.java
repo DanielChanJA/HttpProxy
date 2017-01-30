@@ -49,6 +49,7 @@ public class Proxy {
   private byte[] extractBytes(InputStream incomingStream, boolean replaceHost) {
 
     String requestContent;
+
     // Abnormally high because we need to compensate for partial reads issue
     // in initialization.
     byte[] buffer = new byte[100000];
